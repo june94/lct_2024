@@ -1,5 +1,5 @@
 |Объекты|Размер|Особенности|Минусы и сложности|Ссылка|Использовать|
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 |вертолеты, самолеты, дроны различных видов|11к|-|-|[link](https://github.com/aircraftcontext/aircraft-context-dataset)|+|
 |птица, дрон, вертолет, самолет, военные дроны|~3к|-|чекать пресечения с исходным дс и прочими робофлоу|[link](https://universe.roboflow.com/military-xmb2h/military-drone-detection/browse?queryText=class%3AUAV&pageSize=50&startingIndex=0&browseQuery=true)|+|
 |птица, дрон, вертолет, самолет|~23к|-|чекать пресечения с исходным дс и прочими робофлоу|[link](https://universe.roboflow.com/airborne-object-detection/airborne-object-detection-4-aod4/browse?queryText=&pageSize=50&startingIndex=50&browseQuery=true)|+|
