@@ -1,4 +1,5 @@
 import torch
+import os
 from sahi.predict import get_sliced_prediction
 from sahi.utils.yolov8 import download_yolov8s_model
 from sahi import AutoDetectionModel
@@ -43,15 +44,12 @@ class Model:
         with open(os.path.join(save_path, file_name), "w") as f:
             for detection in result.object_prediction_list:
                 tmp_bb = Model.voc_to_yolo(*detection.bbox.to_xyxy(), image_height, image_width)
-                f.write(f"{detection.category.id} {" ".join([str(i) for i in tmp_bb])}\n")
+                f.write(f"{detection.category.id} {' '.join([str(i) for i in tmp_bb])}\n")
 
     @staticmethod
     def plot_preds(result, image_path, save_path):
-        
+        pass
         #export_visuals
-
-
-import os
 
 
 img_dir = "/home/Документы/lct_2024/small_lct/test/images"
@@ -62,9 +60,9 @@ for img in img_paths:
     if isinstance(img, str):
         obj = f"{img_dir}/{img}"
     else:
-        obj = np.frombuffer(image_bytes, np.uint8)
+        obj = np.frombuffer(img, np.uint8)
     r = model(obj)
-    model.save_preds(r, img)
+    model.save_preds(r, image_height, image_width, img)
     break
 
 """"# Function to process and visualize incoming images on-the-fly
