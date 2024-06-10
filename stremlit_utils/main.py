@@ -1,6 +1,6 @@
 import streamlit as st
 import time
-from .config import *
+#from .config import *
 
 st.set_page_config(page_title='lct_2024')
 
@@ -16,19 +16,19 @@ with st.expander('**Инструкция**', expanded=True):
 
 photo_tab, video_tab = st.tabs(['Загрузка фото', 'Загрузка видео'])
 
-# model init
-
-# чекать формат видео и фото
+if 'button_clicked' not in st.session_state:
+    st.session_state.button_clicked = False
 
 with photo_tab:
     input_container = st.container(border=True)
 
-    photo_input = input_container.file_uploader('**Загрузить фото:**', accept_multiple_files=True)
+    photo_input = input_container.file_uploader('**Загрузить фото:**', accept_multiple_files=True,
+                                                type=['png', 'jpg'])
     # проверка битых файлов?
 
     if len(photo_input) > 0:
 
-        if input_container.button('Начать расчёт'):
+        if input_container.button('Начать расчёт', key='photo_upload'):
             with input_container.status('Производится расчёт', expanded=True) as status:
                 st.write('1. Считывание фотографий')
                 time.sleep(1)
@@ -36,7 +36,10 @@ with photo_tab:
                 st.write('2. Работа модели')
                 #time.sleep(1)
                 for file in photo_input:
-                    pass
+                    #pass
+                    st.text(file.name)
+                    st.text(type(file))
+                    st.image(file)
                     #st.text(file)
                     # model infer
                     # return
@@ -45,22 +48,40 @@ with photo_tab:
                 st.write('3. Вывод результатов')
                 time.sleep(1)
 
-            status.update(label='Расчёт окончен', state='complete', expanded=False)
+            status.update(label='Расчёт окончен. Предсказания сохранены в *SAVE_ROOT*', state='complete', expanded=False)
 
 with video_tab:
     input_container = st.container(border=True)
 
-    video_input = input_container.file_uploader('**Загрузить видео:**')
+    box_found = input_container.checkbox('Найдены боксы? (временно)', value=True)
+    time_elapsed = input_container.number_input('Сколько времени затратило? (временно)')
+
+    video_input = input_container.file_uploader('**Загрузить видео:**',
+                                                type=['mp4', 'mkv', 'mov', 'avi'])
 
     if video_input is not None:
-        # проверка названия видео, если такое уже есть в логах, то подгружаем результ оттуда
+        st.text(type(video_input))
 
-        # если нет, то запуск раскадровки, инференс каждого н кадра + апроксим маежду ними + сохранение лога 
-        # 
+        if input_container.button('Начать расчёт', key='video_upload'):
+            st.session_state['button_clicked'] = True
 
-        # ms/img (float) + сколько на все видео
-        # из конфига подтянуть путь, куда сохран предск и показать, что загрузка туда зевершена (SAVE_ROOT)
-        
+            with input_container.status('Производится расчёт', expanded=True) as status:
+                st.write('1. Проверка названия видео')
+                # проверка названия видео, если такое уже есть в логах, то подгружаем результ оттуда
+                # если нет, то запуск раскадровки, инференс каждого н кадра + апроксим маежду ними + сохранение лога
+
+                time.sleep(1)
+                st.write('2. Работа модели')
+                time.sleep(2)
+                # ms/img (float) + сколько на все видео
+                # из конфига подтянуть путь, куда сохран предск и показать, что загрузка туда зевершена (SAVE_ROOT)
+                st.write('3. Отрисовка результата')
+                time.sleep(2)
+
+            st.session_state.video_output = video_input
+
+            status.update(label='Расчёт окончен', state='complete', expanded=False)
+
         # выбор классов, которые хотим отрисовать (мульти)
         
         # и выбранные классы идут в функц отрисовки
@@ -75,32 +96,38 @@ with video_tab:
         # ползунок
         # старт - опасность - прочее - прочее - ... - 
 
-        type_1_container = st.container(border=True)
-        type_1_container.markdown('**1. Выбор слайдером секунды**') # всегда доступен подный интервал!
-        # мб выдвать что юоксов нет
-        # 
-        select_time = type_1_container.select_slider('Выбрать интервал (сек)', [0, 5, 10, 15, 20, 25, 30])
+        if st.session_state['button_clicked']:
+            video_output = st.session_state.video_output
+            result_container = st.container(border=True)
+            result_container.markdown('##### Вывод результатов')
+            # всегда доступен подный интервал!
 
-        type_1_container.video(video_input, start_time=select_time, end_time=select_time + 5,
-                 autoplay=True, loop=False)
+            result_container.markdown('Времени затрачено: ' + str(time_elapsed))
 
-        """type_2_container = st.container(border=True)
+            # мб выдвать что боксов нет
+            if box_found:
+                # выбор классов, которые хотим отрисовать (мульти)
+                class_select = result_container.multiselect('Выбрать класс(ы) для отображения:',
+                                                           ['0 - БПЛА коптерного типа',
+                                                            '1 - самолет',
+                                                            '2 - вертолет',
+                                                            '3 - птица',
+                                                            '4 - БПЛА самолетного типа'])
 
-        type_2_container.markdown('**2. Выбор списком**')
-        moment_dict = {'Начало': 0,
-                       'Первый интервал (потягивается)': 2,
-                       'Второй интервал (чешет зад)': 10,
-                       'Третий интервал (нюхает цветочки)': 20}
+                moment_dict = {'Начало': 0,
+                               'Прочее 1 (потягивается)': 2,
+                               'Опасность 1 (чешет зад)': 10,
+                               'Прочее 2 (нюхает цветочки)': 20}
 
-        select_moment = type_2_container.selectbox('Выбрать момент',
-                                     moment_dict.keys())
+                select_moment = result_container.select_slider('Выбрать интервал (сек)', moment_dict.keys())
 
-        type_2_container.video(video_input, start_time=moment_dict[select_moment],
-                 end_time=moment_dict[select_moment] + 5,
-                 autoplay=True, loop=False)
-        """
+                result_container.video(video_output, start_time=moment_dict[select_moment],
+                     end_time=moment_dict[select_moment] + 5,
+                     autoplay=True, loop=False)
+            else:
+                result_container.error('Боксов не найдено')
+                result_container.video(video_output, autoplay=True, loop=False)
 
-        # to update file limit up to 1.1g
 
 
 
