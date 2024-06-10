@@ -1,0 +1,10 @@
+train: /home/Документы/lct_2024/small_lct/train
+val: /home/Документы/lct_2024/small_lct/test
+
+# Classes
+names:
+  0: drone
+  1: plane
+  2: heli
+  3: bird
+  4: uav
