@@ -127,3 +127,4 @@ dmypy.json
 */streamlit_utils/logs/debug/*
 */streamlit_utils/logs/testset/*
 */streamlit_utils/logs/videos/*
+/streamlit_utils/logs
