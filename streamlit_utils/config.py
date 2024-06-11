@@ -10,11 +10,15 @@ CATEGORIES = ["БПЛА (коптер)",
               "БПЛА (самолет)"]
 
 MAP_DANGER = {1: "ОПАСНОСТЬ",
-              0: "Прочее",
-              2: "Начало"}
+              0: "Прочее",}
+              #2: "Начало"}
 
 MAIN_THRESH = 0.25
 THRESH = [0.3, 0.45, 0.4, 0.25, 0.25]
 
 DANGER_SET = set([0, 4])
 OTHER_SET = set([1, 2, 3])
+
+IMG_BATCH_SIZE = 16
+VIDEO_BATCH_SIZE = 16
+IMAGE_SIZE_THRESH = 2560*1440 #2k

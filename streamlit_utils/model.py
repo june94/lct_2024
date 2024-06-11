@@ -1,11 +1,9 @@
 import torch
 import os
 import cv2
-
 import numpy as np
 
 from sahi.predict import get_sliced_prediction
-#from sahi.utils.yolov8 import download_yolov8n_model
 from sahi.utils.cv import Colors
 from sahi import AutoDetectionModel
 
@@ -24,32 +22,34 @@ class Model:
                                                         device="cuda:0" if torch.cuda.is_available() else "cpu" 
                                                         )
         
-    def __call__(self, image):
+    def __call__(self, data, slice_infer=True):
         try:
-            result = get_sliced_prediction(
-                                            image = image,
-                                            detection_model = self.model,
-                                            slice_height = 640,
-                                            slice_width = 640,
-                                            overlap_height_ratio = 0.15,
-                                            overlap_width_ratio = 0.15,
-                                            perform_standard_pred = True,
-                                            postprocess_type = "NMS",
-                                            postprocess_class_agnostic = True,
-                                            postprocess_match_metric = "IOS",
+            if slice_infer:
+                result = get_sliced_prediction(
+                                                image = data,
+                                                detection_model = self.model,
+                                                slice_height = 1024,
+                                                slice_width = 1024,
+                                                overlap_height_ratio = 0.1,
+                                                overlap_width_ratio = 0.1,
+                                                perform_standard_pred = True,
+                                                postprocess_type = "NMS",
+                                                postprocess_class_agnostic = True,
+                                                postprocess_match_metric = "IOS",
 
-            )
+                )
+            else:
+                result = self.model.model.predict(data,
+                                          iou=0.6,
+                                          max_det=50,
+                                          agnostic_nms=True,
+                                          conf=MAIN_THRESH), # classic YOLO inference
         except TypeError:
             return None
         return result
     
     @staticmethod
     def voc_to_yolo(x1, y1, x2, y2, image_w, image_h):
-        """x = ((x2 + x1)/(2*image_w))
-        y = ((y2 + y1)/(2*image_h))
-        w = (x2 - x1)/image_w
-        h = (y2 - y1)/image_h"""
-
         box_x_center = (x1 + x2) / 2.0 - 1
         box_y_center = (y1 + y2) / 2.0 - 1
         box_w = x2 - x1
@@ -63,11 +63,6 @@ class Model:
     
     @staticmethod
     def yolo_to_voc(x, y, w, h, image_w, image_h):
-        """xmax = int((x*image_w + w*image_w)/2.0)
-        xmin = int((x*image_w - w*image_w)/2.0)
-        ymax = int((y*image_h + h*image_h)/2.0)
-        ymin = int((y*image_h - h*image_h)/2.0)"""
-
         xmin = int(image_w * max(float(x) - float(w) / 2, 0))
         xmax = int(image_w * min(float(x) + float(w) / 2, 1))
         ymin = int(image_h * max(float(y) - float(h) / 2, 0))
@@ -76,15 +71,23 @@ class Model:
     
     @staticmethod
     def save_preds(result, image_height, image_width, image_name, 
-                   save_path, save_thresh=None):
+                   save_path, save_thresh=None, res_type="sahi"):
         os.makedirs(save_path, exist_ok=True) 
         file_name = os.path.splitext(image_name)[0] + '.txt'
         with open(os.path.join(save_path, file_name), "w") as f:
-            for detection in result.object_prediction_list:
-                if save_thresh is not None and not detection.score.is_greater_than_threshold(save_thresh[detection.category.id]):
-                    continue
-                tmp_bb = Model.voc_to_yolo(*detection.bbox.to_xyxy(), image_width, image_height)
-                f.write(f"{detection.category.id} {' '.join([str(i) for i in tmp_bb])}\n")
+            if res_type == "sahi":
+                for detection in result.object_prediction_list:
+                    if save_thresh is not None and not detection.score.is_greater_than_threshold(save_thresh[detection.category.id]):
+                        continue
+                    tmp_bbox = Model.voc_to_yolo(*detection.bbox.to_xyxy(), image_width, image_height)
+                    f.write(f"{detection.category.id} {' '.join([str(i) for i in tmp_bbox])}\n")
+            elif res_type == "yolo":
+                bboxes = result.boxes.cpu().numpy()
+                for bbox in bboxes:
+                    if save_thresh is not None and bbox.conf[0] < save_thresh[int(bbox.cls[0])]:
+                        continue
+                    f.write(f"{int(bbox.cls[0])} {' '.join([str(i) for i in bbox.xywhn[0]])}\n")
+                
 
     @staticmethod
     def plot_preds(image, 

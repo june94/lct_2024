@@ -64,11 +64,12 @@ class Video:
         for b in Video.batch(classes, nframes):
             init_tags.append(np.max(b))
 
-        timestamps, tags = [0], [2]
+        timestamps, tags = [0], [init_tags[0]]
         for ind, ch in enumerate(init_tags[1:]):
             if ch != tags[-1]:
                 timestamps.append(ind+1)
                 tags.append(ch)
+
         timestamps = np.array(timestamps) 
         tags = np.array(tags)
         timestamps = timestamps[tags!=-1]
@@ -79,7 +80,7 @@ class Video:
         return res_dict
     
 
-    def make_video(self, select_classes, nframes=20.):
+    def make_video(self, select_classes, nframes=15.):
         fourcc = cv2.VideoWriter_fourcc(*'XVID') 
         video = cv2.VideoWriter(self.res_path, fourcc, nframes, (self.width, self.height), True)
         

@@ -14,6 +14,7 @@ st.set_page_config(page_title='lct_2024')
 st.markdown('#### Нейросеть для мониторинга воздушного пространства вокруг аэропортов')
 st.markdown('##### ЛЦТ 2024. Решение команды :blue-background[Ступор мозговины]')
 
+
 @st.cache_data
 def load_model():
     # Load large model
@@ -49,18 +50,59 @@ with photo_tab:
             with input_container.status('Производится расчёт', expanded=True) as status:
 
                 avg_time = 0
-                for file in photo_input:
+                photo_input.sort(key=lambda x: x.size) 
+                batch_data, huge_imgs = [], []
+                batch_meta, huge_meta = [], []
+                for c, file in enumerate(photo_input):
+                    
                     image = read_image(file)
-                    start = time.time()
-                    result = model(image)
-                    avg_time +=  time.time() - start
-                    if result is None:
+                    if image is None:
                         input_container.error(f"Проблема с файлом {file.name}")
                         continue
-                    model.save_preds(result, image.shape[0], image.shape[1], file.name, save_path=SAVE_IMAGES_TXT)
+
+                    img_meta = [image.shape[0], image.shape[1], file.name]
+
+                    if image.shape[0]*image.shape[1] <= IMAGE_SIZE_THRESH: 
+                        batch_data.append(image)
+                        batch_meta.append(img_meta)
+                    else:
+                        huge_imgs.append(image)
+                        huge_meta.append(img_meta)
+
+                    if c%IMG_BATCH_SIZE == 0 or c==(len(photo_input)-1):
+
+                        start = time.time()
+                        yolo_results = model(batch_data, slice_infer=False)[0]
+                        avg_time += time.time() - start
+                        
+                        for result, meta in zip(yolo_results, batch_meta):
+                            model.save_preds(result, 
+                                             meta[0], 
+                                             meta[1], 
+                                             meta[2], 
+                                             save_path=SAVE_IMAGES_TXT, 
+                                             res_type="yolo")
+
+                        for huge_img in huge_imgs:
+                            sahi_results = []
+                            start = time.time()
+                            sahi_results.append(model(huge_img), slice_infer=True)
+                            avg_time += time.time() - start
+
+                            for result, meta in zip(sahi_results, huge_meta):
+                                model.save_preds(result, 
+                                                meta[0], 
+                                                meta[1], 
+                                                meta[2], 
+                                                save_path=SAVE_IMAGES_TXT, 
+                                                res_type="sahi")
+
+                        batch_data, huge_imgs = [], []
+                        batch_meta, huge_meta = [], []
+                
                 avg_time = np.round(avg_time/len(photo_input), 4) 
 
-                status.update(label=f'Расчёт окончен. Предсказания сохранены в {SAVE_IMAGES_TXT}. Время инференса модели {avg_time} мс/фото', state='complete', expanded=False) 
+                status.update(label=f'Расчёт окончен. Предсказания сохранены в {SAVE_IMAGES_TXT}. Время инференса модели {avg_time} с/фото', state='complete', expanded=False) 
 
 with video_tab:
     input_container = st.container(border=True)
@@ -77,21 +119,55 @@ with video_tab:
             with input_container.status('Работа с видео', expanded=True) as status:
                 st.write('1. Поиск видео в логах')
                 
-                if len(os.listdir(video.labels_path)):
+                if len(os.listdir(video.labels_path)) == len(os.listdir(video.init_images_path)):
                     st.write('2. Видео найдено!')
                 else:
                     st.write('2. Видео не найдено, инференс модели')
+                    
                     avg_time = 0
                     image_dir = os.listdir(video.init_images_path)
-                    for image in image_dir:
-                        full_image_path = f"{video.init_images_path}/{image}"
+                    image_dir.sort(key=lambda x: int(''.join(filter(str.isdigit, x))))
+                    sahi_condition = video.height*video.width >= IMAGE_SIZE_THRESH
+
+                    for image_batch in Video.batch(image_dir, VIDEO_BATCH_SIZE):
+                        full_image_paths = [f"{video.init_images_path}/{image}" for image in image_batch]
+                        
+                        if sahi_condition:
+                            sahi_path = full_image_paths[0]
+                            yolo_paths = full_image_paths[1:]
+                            image_names = image_batch[1:]
+                        else:
+                            yolo_paths = full_image_paths
+                            image_names = image_batch
+                        
                         start = time.time()
-                        result = model(full_image_path)
+                        yolo_results = model(yolo_paths, slice_infer=False)[0]
                         avg_time += time.time() - start
-                        model.save_preds(result, video.height, video.width, image, save_path=video.labels_path, save_thresh=THRESH)
+
+                        for result, image_name in zip(yolo_results, image_names):
+                            model.save_preds(result, 
+                                             video.height, 
+                                             video.width, 
+                                             image_name=image_name, 
+                                             save_path=video.labels_path, 
+                                             save_thresh=THRESH,
+                                             res_type="yolo")
+
+                        if sahi_condition:
+                            start = time.time()
+                            sahi_result = model(sahi_path, slice_infer=True)
+                            avg_time += time.time() - start
+                            model.save_preds(sahi_result, 
+                                            video.height, 
+                                            video.width, 
+                                            image_name=image_batch[0], 
+                                            save_path=video.labels_path, 
+                                            save_thresh=THRESH,
+                                            res_type="sahi")
+
                     avg_time = np.round(avg_time/len(video.init_images_path), 4)
                     
-                    input_container.success(f'Предсказания сохранены в {video.root_dir}. Время инференса модели {avg_time} мс/фото')
+                    input_container.success(f'Предсказания сохранены в {video.root_dir}. Время инференса модели {avg_time} с/кадр')
 
                 status.update(label=f'3. Расчёт окончен', state='complete', expanded=False)
                     
@@ -120,7 +196,7 @@ with video_tab:
             # TODO подписать ползунок - пояснить
             if st.session_state['choice_button_clicked']:
 
-                if len(st.session_state['timestamps']) > 1:
+                if len(st.session_state['timestamps']) > 0:
                     #select_moment = result_container.select_slider('Выбрать интервал', st.session_state['timestamps'].keys())
                     select_moment = result_container.selectbox('Выбрать интервал', st.session_state['timestamps'].keys())
                     
@@ -128,7 +204,6 @@ with video_tab:
 
                     result_container.video(st.session_state['video_output'], start_time=st.session_state['timestamps'][select_moment],
                         autoplay=True, loop=False)
-                    
                 
                 else:
                     result_container.error('Боксов не найдено')
