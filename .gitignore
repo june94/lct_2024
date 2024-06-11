@@ -124,4 +124,6 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-/streamlit_utils/logs
+*/streamlit_utils/logs/debug/*
+*/streamlit_utils/logs/testset/*
+*/streamlit_utils/logs/videos/*
