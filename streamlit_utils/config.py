@@ -43,7 +43,7 @@ IMAGE_SIZE_THRESH = (
 IMG_BATCH_SIZE = 64  # batch size for image inference
 VIDEO_BATCH_SIZE = 30  # batch size for video inference (if frames size > IMAGE_SIZE_THRESH each VIDEO_BATCH_SIZE+1 frame predicted with sahi, others - with stadart yolo inference)
 
-# OPTIONAL #
+# OPTIONAL # don't change these params if you not going to test tensorrt
 CREATE_TENSORRT = False  # flag to convert model to tensorrt
 MAX_TRT_BATCH = -1  # maximum batch for tensorrt model, if in is -1 - skip trt inference
 if MAX_TRT_BATCH > 0:

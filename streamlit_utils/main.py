@@ -23,6 +23,8 @@ def load_model() -> Model:
 
 @st.cache_resource
 def try_to_make_tensorrt():
+    """Опциональный метод получения tensorrt модели
+    """
     from train_utils.convert import export_to_trt
 
     export_to_trt(MODEL_PATH, half=False, batch=MAX_TRT_BATCH)
