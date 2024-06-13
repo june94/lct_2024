@@ -9,12 +9,15 @@ from typing import Optional, Any, Union, List
 from streamlit_utils.config import *
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from sahi.slicing import calc_resolution_factor, calc_aspect_ratio_orientation, calc_ratio_and_slice
+from sahi.slicing import (
+    calc_resolution_factor,
+    calc_aspect_ratio_orientation,
+    calc_ratio_and_slice,
+)
+
 
 class ImageObj:
-    def __init__(self, 
-                 path: str, 
-                 name: str):
+    def __init__(self, path: str, name: str):
         """Структура метаинформации фото для удобства работы с архивом.
 
         Args:
@@ -25,24 +28,25 @@ class ImageObj:
         self.name = name
         self.size = os.path.getsize(self.path)
 
+
 class ImageTar:
-    def __init__(self, 
-                 data: UploadedFile, 
-                 save_path: Optional[str] =f"{SAVE_ROOT}/tmp"):
+    def __init__(
+        self, data: UploadedFile, save_path: Optional[str] = f"{SAVE_ROOT}/tmp"
+    ):
         """Обертка для работы с tar-архивом.
 
         Args:
             data (UploadedFile): загруженные данные из Streamlit
-            save_path (Optional[str], optional): путь по директории распаковки архива. Defaults to f"{SAVE_ROOT}/tmp".
+            save_path (Optional[str], optional): путь по директории
+                   распаковки архива. Defaults to f"{SAVE_ROOT}/tmp".
         """
         self.save_path = save_path
-        self.extract_archive(data)      
-    
+        self.extract_archive(data)
+
     def __len__(self):
         return len(os.listdir(self.save_path))
-        
-    def extract_archive(self, 
-                        data: UploadedFile):
+
+    def extract_archive(self, data: UploadedFile):
         """Распаковка архива.
 
         Args:
@@ -61,8 +65,7 @@ class ImageTar:
         return [ImageObj(self.save_path, f) for f in os.listdir(self.save_path)]
 
     def remove_dir(self):
-        """Удаление директории, куда был распакован архив.
-        """
+        """Удаление директории, куда был распакован архив."""
         if os.path.isdir(self.save_path):
             shutil.rmtree(self.save_path, ignore_errors=True)
 
@@ -71,7 +74,8 @@ def read_image(img_file: Union[ImageObj, UploadedFile]) -> np.ndarray:
     """Чтение (конвертация) изображения в формат opencv.
 
     Args:
-        img_file (Union[ImageObj, UploadedFile]): входные данные от Streamlit или метаинформация о фото (в формате ImageObj) из архива
+        img_file (Union[ImageObj, UploadedFile]): входные данные от Streamlit
+                    или метаинформация о фото (в формате ImageObj) из архива
 
     Returns:
         np.ndarray: изображение
@@ -119,30 +123,34 @@ def get_resolution_selector(res: str, height: int, width: int) -> Union[float, i
         resolution=res, height=height, width=width, orientation=orientation
     )
 
-    return x_overlap/slice_width, y_overlap/slice_height, slice_width, slice_height
+    return x_overlap / slice_width, y_overlap / slice_height, slice_width, slice_height
 
 
-def calc_slice_and_overlap_params(resolution: str, height: int, width: int, orientation: str) -> List[int]:
-    """Одноименный метод из SAHI с новыми коэффициентами для уменьшения количества частей (окон) для больших фото.
+def calc_slice_and_overlap_params(
+    resolution: str, height: int, width: int, orientation: str
+) -> List[int]:
+    """Одноименный метод из SAHI с новыми коэффициентами для
+    уменьшения количества частей (окон) для больших фото.
 
     Args:
         resolution (str): строковое описание размера изображения ("high", "ultra-high")
         height (int): высота изображения
         width (int): ширина изображения
-        orientation (str): строковое описание ориентации изображения (горизонтальное, вертикальное или квадратное)
+        orientation (str): строковое описание ориентации изображения
+                        (горизонтальное, вертикальное или квадратное)
 
     Returns:
         List[int]: лист с размерами скользящего окна и частей его наложения
     """
 
     if resolution == "high":
-        split_row, split_col, overlap_height_ratio, overlap_width_ratio = calc_ratio_and_slice(
-            orientation, slide=1, ratio=0.8
+        split_row, split_col, overlap_height_ratio, overlap_width_ratio = (
+            calc_ratio_and_slice(orientation, slide=1, ratio=0.8)
         )
 
     elif resolution == "ultra-high":
-        split_row, split_col, overlap_height_ratio, overlap_width_ratio = calc_ratio_and_slice(
-            orientation, slide=2, ratio=0.4
+        split_row, split_col, overlap_height_ratio, overlap_width_ratio = (
+            calc_ratio_and_slice(orientation, slide=2, ratio=0.4)
         )
     else:  # low condition
         split_col = 1
