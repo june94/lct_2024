@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
 
-def export_to_trt(model_path, batch, half=False):
+def export_to_trt(model_path, half=False, batch=16):
     model = YOLO(model_path)
     try:
         # Export the model to TensorRT format
@@ -15,4 +15,4 @@ def export_to_trt(model_path, batch, half=False):
     
 
 if __name__ == '__main__':
-    export_to_trt("/home/Документы/lct_2024/lct_2024/weights/best.pt", batch=8)
+    export_to_trt("/lct_2024/weights/best.pt", batch=8)

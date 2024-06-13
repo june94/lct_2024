@@ -1,7 +1,9 @@
-SAVE_ROOT = "/home/Документы/lct_2024/lct_2024/streamlit_utils/logs"  # root to save all image and video results
+SAVE_ROOT = "/lct_2024/streamlit_utils/logs"  # root to save all image and video results
 SAVE_VIDEO = f"{SAVE_ROOT}/videos"  # path to save videos
 SAVE_IMAGES_TXT = f"{SAVE_ROOT}/testset"  # path to save images
-MODEL_PATH = "/home/Документы/lct_2024/lct_2024/weights/best.pt"  # path to model, .onnx or .engine also supported
+MODEL_PATH = (
+    "/lct_2024/weights/best.pt"  # path to model, .onnx or .engine also supported
+)
 
 CATEGORIES = [
     "БПЛА (коптер)",
@@ -40,3 +42,10 @@ IMAGE_SIZE_THRESH = (
 )  # min image size threshold to be predicted with sahi (default is 4k)
 IMG_BATCH_SIZE = 64  # batch size for image inference
 VIDEO_BATCH_SIZE = 30  # batch size for video inference (if frames size > IMAGE_SIZE_THRESH each VIDEO_BATCH_SIZE+1 frame predicted with sahi, others - with stadart yolo inference)
+
+# OPTIONAL #
+CREATE_TENSORRT = False  # flag to convert model to tensorrt
+MAX_TRT_BATCH = -1  # maximum batch for tensorrt model, if in is -1 - skip trt inference
+if MAX_TRT_BATCH > 0:
+    IMG_BATCH_SIZE = VIDEO_BATCH_SIZE = MAX_TRT_BATCH
+    MODEL_PATH = "/lct_2024/weights/best.engine"

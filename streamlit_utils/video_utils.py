@@ -202,7 +202,9 @@ class Video:
         cv2.destroyAllWindows()
 
         # for streamlit (because of streamlit bug with reading opencv created videos)
-        os.system(f'ffmpeg -y -i "{self.tmp_path}" -vcodec libx264 "{self.res_path}"')
+        os.system(
+            f'/usr/bin/ffmpeg -y -i "{self.tmp_path}" -vcodec libx264 "{self.res_path}"'
+        )
         os.system(f'rm "{self.tmp_path}"')
 
         time_dict = Video.get_timestamps(timeline, int(self.get_fps))

@@ -35,7 +35,7 @@ class Model:
         """Warmup модели для ускорения первых итераций инференса."""
         test_img = np.random.rand(640, 640, 3)
         for _ in range(100):
-            self.model.model(test_img)
+            self.model.model(test_img, verbose=False)
 
     def __call__(
         self,
@@ -82,6 +82,7 @@ class Model:
                     agnostic_nms=True,
                     conf=MAIN_THRESH,
                     device=self.device,
+                    verbose=True,
                 )
         except TypeError as e:
             print(e)
