@@ -26,9 +26,4 @@
 4. При последующих запусках контейнера на данном устройстве с trt-моделью желательно снова изменить [CREATE_TENSORRT](https://github.com/june94/lct_2024/blob/main/streamlit_utils/config.py#L47) на False, чтобы избежать повторной конвертации, при желании вернуться к тестированию pytorch-модели [MAX_TRT_BATCH](https://github.com/june94/lct_2024/blob/main/streamlit_utils/config.py#L48) необходимо так же установить = -1
 
 ### Вид приложения:
-TODO
-
-
-Описание....
-
-
+![](streamlit_example.gif)
