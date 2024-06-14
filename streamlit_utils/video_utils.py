@@ -11,7 +11,7 @@ from streamlit_utils.model import Model
 
 class Video:
     def __init__(
-        self, video: UploadedFile, video_root: str = SAVE_VIDEO, get_fps: int = 10
+        self, video: UploadedFile, video_root: str = SAVE_VIDEO, get_fps: int = FPS
     ):
         """Класс видеоданных.
 

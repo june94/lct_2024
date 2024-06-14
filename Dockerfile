@@ -23,4 +23,4 @@ ENV PATH="/home/appuser/.local/bin:${PATH}"
 #RUN pip install onnx onnxruntime-gpu tensorrt 
 # --------------------
 
-CMD ["python", "-m", "streamlit", "run", "/lct_2024/streamlit_utils/main.py",  "--server.maxUploadSize", "1100", "--server.enableXsrfProtection", "false"]
+CMD ["python", "-m", "streamlit", "run", "/lct_2024/streamlit_utils/main.py",  "--server.maxUploadSize", "15000", "--server.enableXsrfProtection", "false"]

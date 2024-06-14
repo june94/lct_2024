@@ -37,6 +37,7 @@ MAP_DANGER = {
 DANGER_SET = set([0, 4])  # sets of class indicies considered as danger
 OTHER_SET = set([1, 2, 3])  # sets of class indicies considered as normal
 
+FPS = 30 # numper of frames in video to process
 IMAGE_SIZE_THRESH = (
     3840 * 2160
 )  # min image size threshold to be predicted with sahi (default is 4k)
