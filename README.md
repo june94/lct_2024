@@ -27,3 +27,5 @@
 
 ### Вид приложения:
 ![](streamlit_example.gif)
+
+[![Watch the video]()](streamlit_example.webm)
